@@ -1,2 +1,4 @@
 nltk
 tqdm
+pytest
+hypothesis
