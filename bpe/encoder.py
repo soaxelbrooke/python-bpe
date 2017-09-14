@@ -7,4 +7,7 @@ class Encoder:
     """
 
     def __init__(self, vocab_size=32768):
+        if vocab_size < 1:
+            raise ValueError('vocab_size must be greater than 0.')
+
         self.vocab_size = vocab_size
