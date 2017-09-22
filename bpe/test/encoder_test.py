@@ -19,7 +19,6 @@ Method raspberrypi diversity pypi return tuple list. Django integration functool
 '''.split('\n')
 
 
-
 @given(st.integers(min_value=1))
 def test_encoder_creation(vocab_size):
     """ Should be able to instantiate an Encoder with expected params """
@@ -39,14 +38,14 @@ def test_encoder_creation_graceful_failure(vocab_size):
     assert died, "Encoder should have raised a ValueError for < 1 vocab size"
 
 
-def test_encoder_fit():
+def test_bpe_encoder_fit():
     """ Encoer should be able to fit to provided text data. """
-    encoder = Encoder(silent=True)
+    encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
                                                             'tool', 'z' + EOW,
-                                                            'import' + EOW,
-                                                            'reduce' + EOW]
+                                                            'impo', 'rt' + EOW,
+                                                            'redu', 'ce' + EOW]
 
 
 def test_single_letter_encoding():
@@ -59,7 +58,7 @@ def test_unseen_word_ending():
     """ The last character should come with a </w> even if it wasn't seen as the last letter of a word in the training
         set.
     """
-    encoder = Encoder(silent=True)
+    encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
-    assert encoder.tokenize('import toolz') == ['import' + EOW, 'tool', 'z' + EOW]
+    assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z' + EOW]
 

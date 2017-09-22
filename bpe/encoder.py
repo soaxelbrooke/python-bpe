@@ -1,6 +1,7 @@
 # coding=utf-8
 """ An encoder which learns byte pair encodings for white-space separated text.  Can tokenize, encode, and decode. """
 from collections import Counter
+from typing import List, Iterable, Dict, Iterator, Callable
 
 from nltk.tokenize import casual_tokenize
 from tqdm import tqdm
@@ -18,25 +19,27 @@ class Encoder:
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
-        self.token_vocab_size = int(vocab_size * (1 - pct_bpe))
-        self.bpe_vocab_size = vocab_size - self.token_vocab_size
+        self.word_vocab_size = int(vocab_size * (1 - pct_bpe))
+        self.bpe_vocab_size = vocab_size - self.word_vocab_size
         self.word_tokenizer = word_tokenizer
-        self.vocab = {}
-        self.inverted_vocab = {}
+        self.word_vocab = {}
+        self.bpe_vocab = {}
+        self.inverse_word_vocab = {}
+        self.inverse_bpe_vocab = {}
         self._progress_bar = iter if silent else tqdm
         self.ngram_min = ngram_min
         self.ngram_max = ngram_max
         self.batch_size = batch_size
 
-    def byte_pair_counts(self, text):
+    def byte_pair_counts(self, words: Iterable[str]):
         """ Counts space separated token character pairs:
             [('T h i s </w>', 4}] -> {'Th': 4, 'hi': 4, 'is': 4, 's</w>': 4}
         """
-        for token, count in self._progress_bar(self.count_tokens(text).items()):
+        for token, count in self._progress_bar(self.count_tokens(words).items()):
             bp_counts = Counter()
             for ngram in token.split(' '):
                 bp_counts[ngram] += count
-            for ngram_size in range(self.ngram_min, min([self.ngram_max, len(token)])):
+            for ngram_size in range(self.ngram_min, min([self.ngram_max, len(token)]) + 1):
                 ngrams = [''.join(ngram) for ngram in toolz.sliding_window(ngram_size, token.split(' '))]
 
                 for ngram in ngrams:
@@ -46,33 +49,54 @@ class Encoder:
                 del bp_counts[EOW]
             yield bp_counts
 
-    def count_tokens(self, text):
+    def count_tokens(self, words: Iterable[str]):
         """ Count tokens into a BPE vocab """
-        token_counts = Counter(toolz.concat(map(self.word_tokenizer, self._progress_bar(text))))
+        token_counts = Counter(self._progress_bar(words))
         return {' '.join(token) + ' ' + EOW: count for token, count in token_counts.items()}
 
-    def fit(self, text):
-        """ Learn vocab from text. """
+    @classmethod
+    def learn_word_vocab(cls, sentences: Iterable[str], tokenize: Callable[[str], List[str]],
+                         max_size: int) -> Dict[str, int]:
+        word_counts = Counter(word + EOW for word in toolz.concat(map(tokenize, sentences))).items()
+        sorted_word_counts = sorted(word_counts, key=lambda p: -p[1])
+        return {word: idx for idx, (word, count) in enumerate(sorted_word_counts[:max_size])}
+
+    def learn_bpe_vocab(self, words: Iterable[str]) -> Dict[str, int]:
+        """ Learns a vocab of byte pair encodings """
         vocab = Counter()
-        for batch in toolz.partition_all(self.batch_size, self.byte_pair_counts(text)):
-            for counter in batch:
-                vocab += counter
+        for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):
+            for byte_pair, count in byte_pair_count.items():
+                vocab[byte_pair] += count
 
-            self.trim_vocab(10 * self.bpe_vocab_size, vocab)
+            if (idx + 1) % 10000 == 0:
+                self.trim_vocab(10 * self.bpe_vocab_size, vocab)
 
-        self.trim_vocab(self.bpe_vocab_size, vocab)
-        self.vocab = {pair: idx for idx, pair in enumerate(sorted(vocab.keys()))}
-        self.inverted_vocab = {idx: pair for pair, idx in self.vocab.items()}
+        sorted_bpe_counts = sorted(vocab.items(), key=lambda p: -p[1])[:self.bpe_vocab_size]
+        return {bp: idx + self.word_vocab_size for idx, (bp, count) in enumerate(sorted_bpe_counts)}
+
+    def fit(self, text: Iterable[str]):
+        """ Learn vocab from text. """
+        _text = list(text)
+
+        # First, learn word vocab
+        self.word_vocab = self.learn_word_vocab(_text, self.word_tokenizer, self.word_vocab_size)
+
+        remaining_words = [word for word in toolz.concat(map(self.word_tokenizer, _text))
+                           if (word + EOW) not in self.word_vocab]
+        self.bpe_vocab = self.learn_bpe_vocab(remaining_words)
+
+        self.inverse_word_vocab = {idx: token for token, idx in self.word_vocab.items()}
+        self.inverse_bpe_vocab = {idx: token for token, idx in self.bpe_vocab.items()}
 
     @staticmethod
-    def trim_vocab(n, vocab):
+    def trim_vocab(n, vocab: Dict[str, int]):
         """  Deletes all pairs below 10 * vocab size to prevent memory problems """
         pair_counts = sorted(vocab.items(), key=lambda p: -p[1])
         pairs_to_trim = [pair for pair, count in pair_counts[n:]]
         for pair in pairs_to_trim:
             del vocab[pair]
 
-    def subword_tokenize(self, word):
+    def subword_tokenize(self, word: str):
         word += EOW
         end_idx = len(word)
         sw_tokens = []
@@ -80,7 +104,7 @@ class Encoder:
 
         while start_idx < len(word):
             subword = word[start_idx:end_idx]
-            if subword in self.vocab:
+            if subword in self.bpe_vocab:
                 yield subword
                 start_idx = end_idx
                 end_idx = len(word)
@@ -97,39 +121,53 @@ class Encoder:
 
         return sw_tokens
 
-    def tokenize(self, sentence):
+    def tokenize(self, sentence: str):
         """  """
         word_tokens = self.word_tokenizer(sentence)
 
         tokens = []
         for word_token in word_tokens:
-            if word_token + EOW in self.vocab:
+            if (word_token + EOW in self.word_vocab) or (word_token + EOW in self.bpe_vocab):
                 tokens.append(word_token + EOW)
             else:
                 tokens.extend(self.subword_tokenize(word_token))
 
         return tokens
 
-    def encode(self, sentences):
+    def transform(self, sentences: Iterable[str]) -> Iterator[List[int]]:
         """ Turns space separated tokens into vocab idxs """
         for sentence in sentences:
-            yield [self.vocab[token] for token in self.tokenize(sentence)]
+            encoded = []
+            for token in self.tokenize(sentence):
+                if token in self.word_vocab:
+                    encoded.append(self.word_vocab[token])
+                else:
+                    encoded.append(self.bpe_vocab[token])
 
-    @classmethod
-    def tokens_to_words(cls, tokens):
-        words = []
-        current_word = []
+            yield encoded
 
-        for token in tokens:
-            if token.endswith(EOW):
-                current_word.append(token[-len(EOW):])
-                words.append(''.join(current_word))
-            else:
-                current_word.append(token)
+    def inverse_transform(self, rows: Iterable[List[int]]) -> Iterator[str]:
+        """ Turns token indexes back into text """
+        for row in rows:
+            words = []
 
-        return words
+            rebuilding_word = False
+            current_word = ''
+            for idx in row:
+                if rebuilding_word and (idx in self.inverse_bpe_vocab):
+                    word = self.inverse_bpe_vocab[idx]
+                    current_word += word
 
-    def decode(self, idx_rows):
-        """ Turns vocab indexes into tokens """
-        for idxs in idx_rows:
-            yield self.tokens_to_words([self.vocab[idx] for idx in idxs])
+                    if word.endswith(EOW):
+                        current_word = current_word[:len(EOW)]
+                        rebuilding_word = False
+                        words.append(current_word)
+                        current_word = ''
+
+                elif idx in self.inverse_word_vocab:
+                    words.append(self.inverse_word_vocab[idx][:len(EOW)])
+
+                else:
+                    raise RuntimeError("Unable to unpack token IDX {}!".format(idx))
+
+            yield ' '.join(words)
