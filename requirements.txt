@@ -2,3 +2,4 @@ nltk
 tqdm
 pytest
 hypothesis
+toolz
