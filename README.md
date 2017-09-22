@@ -1,5 +1,5 @@
 
-# BPE
+# BPE [![Build Status](https://travis-ci.org/soaxelbrooke/python-bpe.svg?branch=master)](https://travis-ci.org/soaxelbrooke/python-bpe)
 
 AKA Byte Pair Encoding.  Learns a vocab and byte pair encoding for provided white-space separated text.
 
