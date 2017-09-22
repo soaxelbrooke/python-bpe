@@ -6,6 +6,7 @@ from typing import List, Iterable, Dict, Iterator, Callable
 from nltk.tokenize import casual_tokenize
 from tqdm import tqdm
 import toolz
+import json
 
 EOW = '</w>'
 
@@ -171,3 +172,30 @@ class Encoder:
                     raise RuntimeError("Unable to unpack token IDX {}!".format(idx))
 
             yield ' '.join(words)
+
+    def vocabs_to_dict(self) -> Dict[str, Dict[str, int]]:
+        return {
+            'byte_pairs': self.bpe_vocab,
+            'words': self.word_vocab,
+        }
+
+    def save(self, outpath: str):
+        with open(outpath, 'w') as outfile:
+            json.dump(self.vocabs_to_dict(), outfile)
+
+    @classmethod
+    def from_dict(cls, vocabs: Dict[str, Dict[str, int]]) -> 'Encoder':
+        encoder = Encoder()
+        encoder.word_vocab = vocabs['words']
+        encoder.bpe_vocab = vocabs['byte_pairs']
+
+        encoder.inverse_bpe_vocab = {v: k for k, v in encoder.bpe_vocab.items()}
+        encoder.inverse_word_vocab = {v: k for k, v in encoder.word_vocab.items()}
+
+        return encoder
+
+    @classmethod
+    def load(cls, in_path: str) -> 'Encoder':
+        with open(in_path) as infile:
+            obj = json.load(infile)
+        return cls.from_dict(obj)
