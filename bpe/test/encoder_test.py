@@ -62,3 +62,20 @@ def test_unseen_word_ending():
     encoder.fit(test_corpus)
     assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z' + EOW]
 
+
+def test_dump_and_load():
+    """ Should be able to dump encoder to dict, then load it again. """
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
+                                                            'tool', 'z' + EOW,
+                                                            'impo', 'rt' + EOW,
+                                                            'redu', 'ce' + EOW]
+
+    encoder_d = encoder.vocabs_to_dict()
+    new_encoder = Encoder.from_dict(encoder_d)
+
+    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
+                                                            'tool', 'z' + EOW,
+                                                            'impo', 'rt' + EOW,
+                                                            'redu', 'ce' + EOW]
