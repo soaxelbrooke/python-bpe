@@ -77,7 +77,7 @@ class Encoder:
 
     def fit(self, text: Iterable[str]):
         """ Learn vocab from text. """
-        _text = list(text)
+        _text = [l.lower().strip() for l in text]
 
         # First, learn word vocab
         self.word_vocab = self.learn_word_vocab(_text, self.word_tokenizer, self.word_vocab_size)
