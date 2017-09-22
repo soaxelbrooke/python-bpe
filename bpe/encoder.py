@@ -13,13 +13,13 @@ class Encoder:
     """ Encodes white-space separated text using byte-pair encoding.  See https://arxiv.org/abs/1508.07909 for details.
     """
 
-    def __init__(self, vocab_size=32768, bpe_vocab_size=None, word_tokenizer=casual_tokenize, silent=False, ngram_min=2,
+    def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=casual_tokenize, silent=False, ngram_min=2,
                  ngram_max=4, batch_size=1000000):
-        if vocab_size < 1 and (bpe_vocab_size is not None and bpe_vocab_size < 0):
+        if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
-        self.vocab_size = vocab_size
-        self.bpe_vocab_size = bpe_vocab_size or vocab_size
+        self.token_vocab_size = int(vocab_size * (1 - pct_bpe))
+        self.bpe_vocab_size = vocab_size - self.token_vocab_size
         self.word_tokenizer = word_tokenizer
         self.vocab = {}
         self.inverted_vocab = {}
