@@ -33,6 +33,7 @@ class Encoder:
         self.batch_size = batch_size
         self.required_tokens = required_tokens
         self.EOW = EOW
+        self.eow_len = len(EOW)
 
     def byte_pair_counts(self, words: Iterable[str]):
         """ Counts space separated token character pairs:
@@ -68,6 +69,7 @@ class Encoder:
     def learn_bpe_vocab(self, words: Iterable[str]) -> Dict[str, int]:
         """ Learns a vocab of byte pair encodings """
         vocab = Counter()
+        vocab[self.EOW] = int(2**63)
         for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):
             for byte_pair, count in byte_pair_count.items():
                 vocab[byte_pair] += count
@@ -109,15 +111,23 @@ class Encoder:
         while start_idx < len(word):
             subword = word[start_idx:end_idx]
             if subword in self.bpe_vocab:
-                yield subword
+                sw_tokens.append(subword)
                 start_idx = end_idx
                 end_idx = len(word)
             elif len(subword) == 1:
-                yield subword
+                sw_tokens.append(subword)
                 start_idx = end_idx
                 end_idx = len(word)
-            elif len(subword) == 1 + len(self.EOW) and subword.endswith(self.EOW):
-                yield subword
+            elif len(subword) == 1 + self.eow_len and subword.endswith(self.EOW):
+                if subword in self.bpe_vocab:
+                    sw_tokens.append(subword)
+                    start_idx = end_idx
+                    end_idx = len(word)
+                else:
+                    sw_tokens.append(subword[:1])
+                    start_idx += 1
+            elif subword == self.EOW:
+                sw_tokens.append(subword)
                 start_idx = end_idx
                 end_idx = len(word)
             else:
@@ -160,17 +170,26 @@ class Encoder:
             current_word = ''
             for idx in row:
                 if rebuilding_word and (idx in self.inverse_bpe_vocab):
+
                     word = self.inverse_bpe_vocab[idx]
                     current_word += word
 
                     if word.endswith(self.EOW):
-                        current_word = current_word[:len(self.EOW)]
+                        current_word = current_word[:-self.eow_len]
                         rebuilding_word = False
                         words.append(current_word)
                         current_word = ''
 
                 elif idx in self.inverse_word_vocab:
-                    words.append(self.inverse_word_vocab[idx][:len(self.EOW)])
+                    words.append(self.inverse_word_vocab[idx][:-self.eow_len])
+
+                elif idx in self.inverse_bpe_vocab:
+                    word = self.inverse_bpe_vocab[idx]
+                    if word.endswith(self.EOW):
+                        words.append(word[:-self.eow_len])
+                    else:
+                        rebuilding_word = True
+                        current_word += self.inverse_bpe_vocab[idx]
 
                 else:
                     raise RuntimeError("Unable to unpack token IDX {}!".format(idx))

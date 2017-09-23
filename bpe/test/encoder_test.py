@@ -43,8 +43,8 @@ def test_bpe_encoder_fit():
     encoder = Encoder(silent=True, pct_bpe=1)
     EOW = encoder.EOW
     encoder.fit(test_corpus)
-    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
-                                                            'tool', 'z' + EOW,
+    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
+                                                            'tool', 'z', EOW,
                                                             'impo', 'rt' + EOW,
                                                             'redu', 'ce' + EOW]
 
@@ -54,7 +54,7 @@ def test_single_letter_encoding():
     encoder = Encoder()
     EOW = encoder.EOW
     assert encoder.tokenize('single letters') == \
-        list('singl') + ['e' + EOW] + list('letter') + ['s' + EOW]
+        list('single') + [EOW] + list('letters') + [EOW]
 
 
 def test_unseen_word_ending():
@@ -64,7 +64,7 @@ def test_unseen_word_ending():
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
     EOW = encoder.EOW
-    assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z' + EOW]
+    assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z', EOW]
 
 
 def test_dump_and_load():
@@ -72,18 +72,18 @@ def test_dump_and_load():
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
     EOW = encoder.EOW
-    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
-                                                            'tool', 'z' + EOW,
+    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
+                                                            'tool', 'z', EOW,
                                                             'impo', 'rt' + EOW,
                                                             'redu', 'ce' + EOW]
 
     encoder_d = encoder.vocabs_to_dict()
     new_encoder = Encoder.from_dict(encoder_d)
 
-    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
-                                                            'tool', 'z' + EOW,
-                                                            'impo', 'rt' + EOW,
-                                                            'redu', 'ce' + EOW]
+    assert new_encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
+                                                                'tool', 'z', EOW,
+                                                                'impo', 'rt' + EOW,
+                                                                'redu', 'ce' + EOW]
 
 def test_required_tokens():
     """ Should be able to require tokens to be present in encoder """
@@ -96,6 +96,12 @@ def test_required_tokens():
 def test_eow_accessible_on_encoders():
     encoder = Encoder()
     assert encoder.EOW == '</w>'
+
+
+def test_subword_tokenize():
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+    assert list(encoder.subword_tokenize('this')) == ['th', 'is', encoder.EOW]
 
 
 def test_inverse_transform():
