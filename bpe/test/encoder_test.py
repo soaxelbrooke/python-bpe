@@ -79,3 +79,10 @@ def test_dump_and_load():
                                                             'tool', 'z' + EOW,
                                                             'impo', 'rt' + EOW,
                                                             'redu', 'ce' + EOW]
+
+def test_required_tokens():
+    """ Should be able to require tokens to be present in encoder """
+    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['cats', 'dogs'])
+    encoder.fit(test_corpus)
+    assert 'cats' in encoder.word_vocab
+    assert 'dogs' in encoder.word_vocab

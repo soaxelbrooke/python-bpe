@@ -16,11 +16,11 @@ class Encoder:
     """
 
     def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=casual_tokenize, silent=False, ngram_min=2,
-                 ngram_max=4, batch_size=1000000):
+                 ngram_max=4, batch_size=1000000, required_tokens=None):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
-        self.word_vocab_size = int(vocab_size * (1 - pct_bpe))
+        self.word_vocab_size = max([int(vocab_size * (1 - pct_bpe)), len(required_tokens or [])])
         self.bpe_vocab_size = vocab_size - self.word_vocab_size
         self.word_tokenizer = word_tokenizer
         self.word_vocab = {}
@@ -31,6 +31,7 @@ class Encoder:
         self.ngram_min = ngram_min
         self.ngram_max = ngram_max
         self.batch_size = batch_size
+        self.required_tokens = required_tokens
 
     def byte_pair_counts(self, words: Iterable[str]):
         """ Counts space separated token character pairs:
@@ -55,11 +56,12 @@ class Encoder:
         token_counts = Counter(self._progress_bar(words))
         return {' '.join(token) + ' ' + EOW: count for token, count in token_counts.items()}
 
-    @classmethod
-    def learn_word_vocab(cls, sentences: Iterable[str], tokenize: Callable[[str], List[str]],
+    def learn_word_vocab(self, sentences: Iterable[str], tokenize: Callable[[str], List[str]],
                          max_size: int) -> Dict[str, int]:
-        word_counts = Counter(word + EOW for word in toolz.concat(map(tokenize, sentences))).items()
-        sorted_word_counts = sorted(word_counts, key=lambda p: -p[1])
+        word_counts = Counter(word + EOW for word in toolz.concat(map(tokenize, sentences)))
+        for token in (self.required_tokens or []):
+            word_counts[token] = int(2**63)
+        sorted_word_counts = sorted(word_counts.items(), key=lambda p: -p[1])
         return {word: idx for idx, (word, count) in enumerate(sorted_word_counts[:max_size])}
 
     def learn_bpe_vocab(self, words: Iterable[str]) -> Dict[str, int]:
