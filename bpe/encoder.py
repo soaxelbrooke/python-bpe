@@ -8,7 +8,7 @@ from tqdm import tqdm
 import toolz
 import json
 
-EOW = '</w>'
+DEFAULT_EOW = '</w>'
 
 
 class Encoder:
@@ -16,7 +16,7 @@ class Encoder:
     """
 
     def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=casual_tokenize, silent=False, ngram_min=2,
-                 ngram_max=4, batch_size=1000000, required_tokens=None):
+                 ngram_max=4, batch_size=1000000, required_tokens=None, EOW: str=DEFAULT_EOW):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
@@ -32,6 +32,7 @@ class Encoder:
         self.ngram_max = ngram_max
         self.batch_size = batch_size
         self.required_tokens = required_tokens
+        self.EOW = EOW
 
     def byte_pair_counts(self, words: Iterable[str]):
         """ Counts space separated token character pairs:
@@ -47,18 +48,18 @@ class Encoder:
                 for ngram in ngrams:
                     bp_counts[''.join(ngram)] += count
 
-            if EOW in bp_counts:
-                del bp_counts[EOW]
+            if self.EOW in bp_counts:
+                del bp_counts[self.EOW]
             yield bp_counts
 
     def count_tokens(self, words: Iterable[str]):
         """ Count tokens into a BPE vocab """
         token_counts = Counter(self._progress_bar(words))
-        return {' '.join(token) + ' ' + EOW: count for token, count in token_counts.items()}
+        return {' '.join(token) + ' ' + self.EOW: count for token, count in token_counts.items()}
 
     def learn_word_vocab(self, sentences: Iterable[str], tokenize: Callable[[str], List[str]],
                          max_size: int) -> Dict[str, int]:
-        word_counts = Counter(word + EOW for word in toolz.concat(map(tokenize, sentences)))
+        word_counts = Counter(word + self.EOW for word in toolz.concat(map(tokenize, sentences)))
         for token in (self.required_tokens or []):
             word_counts[token] = int(2**63)
         sorted_word_counts = sorted(word_counts.items(), key=lambda p: -p[1])
@@ -85,7 +86,7 @@ class Encoder:
         self.word_vocab = self.learn_word_vocab(_text, self.word_tokenizer, self.word_vocab_size)
 
         remaining_words = [word for word in toolz.concat(map(self.word_tokenizer, _text))
-                           if (word + EOW) not in self.word_vocab]
+                           if (word + self.EOW) not in self.word_vocab]
         self.bpe_vocab = self.learn_bpe_vocab(remaining_words)
 
         self.inverse_word_vocab = {idx: token for token, idx in self.word_vocab.items()}
@@ -100,7 +101,7 @@ class Encoder:
             del vocab[pair]
 
     def subword_tokenize(self, word: str):
-        word += EOW
+        word += self.EOW
         end_idx = len(word)
         sw_tokens = []
         start_idx = 0
@@ -115,7 +116,7 @@ class Encoder:
                 yield subword
                 start_idx = end_idx
                 end_idx = len(word)
-            elif len(subword) == 1 + len(EOW) and subword.endswith(EOW):
+            elif len(subword) == 1 + len(self.EOW) and subword.endswith(self.EOW):
                 yield subword
                 start_idx = end_idx
                 end_idx = len(word)
@@ -130,8 +131,9 @@ class Encoder:
 
         tokens = []
         for word_token in word_tokens:
-            if (word_token + EOW in self.word_vocab) or (word_token + EOW in self.bpe_vocab):
-                tokens.append(word_token + EOW)
+            if (word_token + self.EOW in self.word_vocab) or \
+                    (word_token + self.EOW in self.bpe_vocab):
+                tokens.append(word_token + self.EOW)
             else:
                 tokens.extend(self.subword_tokenize(word_token))
 
@@ -161,14 +163,14 @@ class Encoder:
                     word = self.inverse_bpe_vocab[idx]
                     current_word += word
 
-                    if word.endswith(EOW):
-                        current_word = current_word[:len(EOW)]
+                    if word.endswith(self.EOW):
+                        current_word = current_word[:len(self.EOW)]
                         rebuilding_word = False
                         words.append(current_word)
                         current_word = ''
 
                 elif idx in self.inverse_word_vocab:
-                    words.append(self.inverse_word_vocab[idx][:len(EOW)])
+                    words.append(self.inverse_word_vocab[idx][:len(self.EOW)])
 
                 else:
                     raise RuntimeError("Unable to unpack token IDX {}!".format(idx))

@@ -3,7 +3,7 @@
 from hypothesis import given
 import hypothesis.strategies as st
 
-from bpe.encoder import Encoder, EOW
+from bpe.encoder import Encoder
 
 # Generated with http://pythonpsum.com
 test_corpus = '''Object raspberrypi functools dict kwargs. Gevent raspberrypi functools. Dunder raspberrypi decorator dict lambda zip import pyramid.
@@ -41,6 +41,7 @@ def test_encoder_creation_graceful_failure(vocab_size):
 def test_bpe_encoder_fit():
     """ Encoer should be able to fit to provided text data. """
     encoder = Encoder(silent=True, pct_bpe=1)
+    EOW = encoder.EOW
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
                                                             'tool', 'z' + EOW,
@@ -51,15 +52,18 @@ def test_bpe_encoder_fit():
 def test_single_letter_encoding():
     """ Should yield single letters when untrained """
     encoder = Encoder()
-    assert encoder.tokenize('single letters') == list('singl') + ['e' + EOW] + list('letter') + ['s' + EOW]
+    EOW = encoder.EOW
+    assert encoder.tokenize('single letters') == \
+        list('singl') + ['e' + EOW] + list('letter') + ['s' + EOW]
 
 
 def test_unseen_word_ending():
-    """ The last character should come with a </w> even if it wasn't seen as the last letter of a word in the training
-        set.
+    """ The last character should come with a </w> even if it wasn't seen as the last letter of a 
+        word in the training set.
     """
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
+    EOW = encoder.EOW
     assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z' + EOW]
 
 
@@ -67,6 +71,7 @@ def test_dump_and_load():
     """ Should be able to dump encoder to dict, then load it again. """
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
+    EOW = encoder.EOW
     assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm' + EOW,
                                                             'tool', 'z' + EOW,
                                                             'impo', 'rt' + EOW,
@@ -86,3 +91,9 @@ def test_required_tokens():
     encoder.fit(test_corpus)
     assert 'cats' in encoder.word_vocab
     assert 'dogs' in encoder.word_vocab
+
+
+def test_eow_accessible_on_encoders():
+    encoder = Encoder()
+    assert encoder.EOW == '</w>'
+
