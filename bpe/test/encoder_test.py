@@ -89,11 +89,18 @@ def test_required_tokens():
     """ Should be able to require tokens to be present in encoder """
     encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['cats', 'dogs'])
     encoder.fit(test_corpus)
-    assert 'cats' in encoder.word_vocab
-    assert 'dogs' in encoder.word_vocab
+    assert 'cats' + encoder.EOW in encoder.word_vocab
+    assert 'dogs' + encoder.EOW in encoder.word_vocab
 
 
 def test_eow_accessible_on_encoders():
     encoder = Encoder()
     assert encoder.EOW == '</w>'
 
+
+def test_inverse_transform():
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+    
+    result = list(encoder.inverse_transform(encoder.transform(['this is how we do it'])))[0]
+    assert result == 'this is how we do it'

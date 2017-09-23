@@ -61,7 +61,7 @@ class Encoder:
                          max_size: int) -> Dict[str, int]:
         word_counts = Counter(word + self.EOW for word in toolz.concat(map(tokenize, sentences)))
         for token in (self.required_tokens or []):
-            word_counts[token] = int(2**63)
+            word_counts[token + self.EOW] = int(2**63)
         sorted_word_counts = sorted(word_counts.items(), key=lambda p: -p[1])
         return {word: idx for idx, (word, count) in enumerate(sorted_word_counts[:max_size])}
 
@@ -143,7 +143,7 @@ class Encoder:
         """ Turns space separated tokens into vocab idxs """
         for sentence in sentences:
             encoded = []
-            for token in self.tokenize(sentence):
+            for token in self.tokenize(sentence.lower().strip()):
                 if token in self.word_vocab:
                     encoded.append(self.word_vocab[token])
                 else:
