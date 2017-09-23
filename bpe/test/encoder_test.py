@@ -131,3 +131,12 @@ def test_fixed_length_encoding():
     assert len(result) == 2
     assert len(result[0]) == 10
     assert len(result[1]) == 10
+
+
+def test_unknown_char_handling():
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+
+    result = list(encoder.inverse_transform(encoder.transform([';'])))[0]
+    assert encoder.UNK in result
+    assert ';' not in result

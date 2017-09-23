@@ -164,7 +164,7 @@ class Encoder:
                 elif token in self.bpe_vocab:
                     encoded.append(self.bpe_vocab[token])
                 else:
-                    encoded.append(self.UNK)
+                    encoded.append(self.bpe_vocab[self.UNK])
 
             if fixed_length is not None:
                 encoded = encoded[:fixed_length]
