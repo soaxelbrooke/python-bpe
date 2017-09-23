@@ -34,6 +34,7 @@ class Encoder:
         self.required_tokens = required_tokens
         self.EOW = EOW
         self.eow_len = len(EOW)
+        self.UNK = '<unknown/>'
 
     def byte_pair_counts(self, words: Iterable[str]):
         """ Counts space separated token character pairs:
@@ -70,6 +71,7 @@ class Encoder:
         """ Learns a vocab of byte pair encodings """
         vocab = Counter()
         vocab[self.EOW] = int(2**63)
+        vocab[self.UNK] = int(2**63)
         for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):
             for byte_pair, count in byte_pair_count.items():
                 vocab[byte_pair] += count
@@ -149,17 +151,21 @@ class Encoder:
 
         return tokens
 
-    def transform(self, sentences: Iterable[str]) -> Iterator[List[int]]:
+    def transform(self, sentences: Iterable[str], reversed: bool=False) -> Iterator[List[int]]:
         """ Turns space separated tokens into vocab idxs """
+        direction = -1 if reversed else 1
         for sentence in sentences:
             encoded = []
-            for token in self.tokenize(sentence.lower().strip()):
+            tokens = list(self.tokenize(sentence.lower().strip()))
+            for token in tokens:
                 if token in self.word_vocab:
                     encoded.append(self.word_vocab[token])
-                else:
+                elif token in self.bpe_vocab:
                     encoded.append(self.bpe_vocab[token])
+                else:
+                    encoded.append(self.UNK)
 
-            yield encoded
+            yield encoded[::direction]
 
     def inverse_transform(self, rows: Iterable[List[int]]) -> Iterator[str]:
         """ Turns token indexes back into text """
