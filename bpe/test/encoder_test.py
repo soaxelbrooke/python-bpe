@@ -110,3 +110,10 @@ def test_inverse_transform():
     
     result = list(encoder.inverse_transform(encoder.transform(['this is how we do it'])))[0]
     assert result == 'this is how we do it'
+
+
+@given(st.lists(st.text()))
+def test_encoder_learning_from_random_sentences(sentences):
+    encoder = Encoder(silent=True)
+    encoder.fit(test_corpus)
+    encoded = encoder.transform(sentences)
