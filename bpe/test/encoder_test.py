@@ -117,3 +117,17 @@ def test_encoder_learning_from_random_sentences(sentences):
     encoder = Encoder(silent=True)
     encoder.fit(test_corpus)
     encoded = encoder.transform(sentences)
+
+
+def test_fixed_length_encoding():
+    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['<PAD>'])
+    encoder.fit(test_corpus)
+
+    result = list(encoder.transform([''], fixed_length=10, padding='<PAD>'))
+    assert len(result) == 1
+    assert len(result[0]) == 10
+
+    result = list(encoder.transform(['', 'import ' * 50], fixed_length=10, padding='<PAD>'))
+    assert len(result) == 2
+    assert len(result[0]) == 10
+    assert len(result[1]) == 10

@@ -151,7 +151,8 @@ class Encoder:
 
         return tokens
 
-    def transform(self, sentences: Iterable[str], reversed: bool=False) -> Iterator[List[int]]:
+    def transform(self, sentences: Iterable[str], reversed: bool=False,
+                  fixed_length: int=None, padding: str=None) -> Iterator[List[int]]:
         """ Turns space separated tokens into vocab idxs """
         direction = -1 if reversed else 1
         for sentence in sentences:
@@ -164,6 +165,11 @@ class Encoder:
                     encoded.append(self.bpe_vocab[token])
                 else:
                     encoded.append(self.UNK)
+
+            if fixed_length is not None:
+                encoded = encoded[:fixed_length]
+                while len(encoded) < fixed_length:
+                    encoded.append(self.word_vocab[padding + self.EOW])
 
             yield encoded[::direction]
 
