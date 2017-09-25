@@ -8,10 +8,16 @@ python:
   - nightly
   - pypy
   - pypy3
+addons:
+  apt:
+    sources:
+      - deadsnakes
+    packages:
+      - python3.6
 install:
   - python setup.py install
 script:
-  - python3 --version
-  - python3 -m mypy bpe --ignore-missing-imports
-  - python3 -m mypy bpe --py2 --ignore-missing-imports
+  - python3.6 --version
+  - python3.6 -m mypy bpe --ignore-missing-imports
+  - python3.6 -m mypy bpe --py2 --ignore-missing-imports
   - python setup.py test
