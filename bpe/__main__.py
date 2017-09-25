@@ -4,7 +4,8 @@ import sys
 from bpe.encoder import Encoder
 
 
-def main(corpus_path: str):
+def main(corpus_path):
+    # type: (str) -> None
     """ Loads corpus, learns word and BPE vocab, and writes to stdout.  Assumes corpus is
         line-separated text.
     """
