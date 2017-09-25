@@ -6,8 +6,8 @@ python:
   - pypy
   - pypy3
 install:
-  - python3 setup.py install
+  - python setup.py install
 script:
-  - python3 -m mypy bpe --ignore-missing-imports
-  - python3 -m mypy bpe --py2 --ignore-missing-imports
-  - python3 setup.py test
+  - python -m mypy bpe --ignore-missing-imports
+  - python -m mypy bpe --py2 --ignore-missing-imports
+  - python setup.py test
