@@ -1,6 +1,7 @@
 # coding=utf-8
 """ An encoder which learns byte pair encodings for white-space separated text.  Can tokenize, encode, and decode. """
 from collections import Counter
+from typing import Dict, Iterable, Callable, List, Any, Iterator
 
 from nltk.tokenize import wordpunct_tokenize
 from tqdm import tqdm
@@ -42,7 +43,7 @@ class Encoder:
             [('T h i s </w>', 4}] -> {'Th': 4, 'hi': 4, 'is': 4, 's</w>': 4}
         """
         for token, count in self._progress_bar(self.count_tokens(words).items()):
-            bp_counts = Counter()
+            bp_counts = Counter()  # type: Counter
             for ngram in token.split(' '):
                 bp_counts[ngram] += count
             for ngram_size in range(self.ngram_min, min([self.ngram_max, len(token)]) + 1):
@@ -72,7 +73,7 @@ class Encoder:
     def learn_bpe_vocab(self, words):
         # type: (Encoder, Iterable[str]) -> Dict[str, int]
         """ Learns a vocab of byte pair encodings """
-        vocab = Counter()
+        vocab = Counter()  # type: Counter
         vocab[self.EOW] = int(2**63)
         vocab[self.UNK] = int(2**63)
         for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):

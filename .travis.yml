@@ -7,4 +7,5 @@ python:
 install:
   - python setup.py install
 script:
+  - python3 -m mypy bpe
   - python setup.py test
