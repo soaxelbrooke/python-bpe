@@ -3,7 +3,7 @@
 from collections import Counter
 from typing import List, Iterable, Dict, Iterator, Callable
 
-from nltk.tokenize import casual_tokenize
+from nltk.tokenize import wordpunct_tokenize
 from tqdm import tqdm
 import toolz
 import json
@@ -15,8 +15,9 @@ class Encoder:
     """ Encodes white-space separated text using byte-pair encoding.  See https://arxiv.org/abs/1508.07909 for details.
     """
 
-    def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=casual_tokenize, silent=False, ngram_min=2,
-                 ngram_max=4, batch_size=1000000, required_tokens=None, EOW: str=DEFAULT_EOW):
+    def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=wordpunct_tokenize, 
+                 silent=False, ngram_min=2, ngram_max=4, batch_size=1000000, required_tokens=None,
+                 EOW: str=DEFAULT_EOW):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
@@ -139,7 +140,7 @@ class Encoder:
 
     def tokenize(self, sentence: str):
         """  """
-        word_tokens = self.word_tokenizer(sentence)
+        word_tokens = self.word_tokenizer(sentence.lower().strip())
 
         tokens = []
         for word_token in word_tokens:

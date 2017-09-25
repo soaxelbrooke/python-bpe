@@ -116,7 +116,7 @@ def test_inverse_transform():
         'looking at the promotional stuff <unknown/> it looks good .'
 
     assert transform('almost nothing should be recognized! let\'s see...') == \
-        'almost nothing should be recognized <unknown/> let<unknown/>s see ...'
+        'almost nothing should be recognized <unknown/> let <unknown/> s see ...'
 
 
 @given(st.lists(st.text()))
