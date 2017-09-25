@@ -1,21 +1,15 @@
 language: python
 python:
-  - 2.7
   - 3.4
   - 3.5
   - 3.6
   - pypy
   - pypy3
-addons:
-  apt:
-    sources:
-      - deadsnakes
-    packages:
-      - python3.6
 install:
   - python setup.py install
-  - python3.6 -m pip install --user mypy
+  - python3 -m pip install --user mypy
 script:
-  - python3.6 -m mypy bpe --ignore-missing-imports
-  - python3.6 -m mypy bpe --py2 --ignore-missing-imports
+  - python3 -m mypy bpe --ignore-missing-imports
+  - python3 -m mypy bpe --py2 --ignore-missing-imports
   - python setup.py test
+  - python2 setup.py test
