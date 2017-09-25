@@ -49,7 +49,7 @@ def test_bpe_encoder_fit():
                                                             'redu', 'ce' + EOW]
 
 
-def test_single_letter_encoding():
+def test_single_letter_tokenizing():
     """ Should yield single letters when untrained """
     encoder = Encoder()
     EOW = encoder.EOW
@@ -107,9 +107,16 @@ def test_subword_tokenize():
 def test_inverse_transform():
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
-    
-    result = list(encoder.inverse_transform(encoder.transform(['this is how we do it'])))[0]
-    assert result == 'this is how we do it'
+
+    transform = lambda text: list(encoder.inverse_transform(encoder.transform([text])))[0]
+
+    assert transform('this is how we do it') == 'this is how we do it'
+
+    assert transform('looking at the promotional stuff, it looks good.') == \
+        'looking at the promotional stuff <unknown/> it looks good .'
+
+    assert transform('almost nothing should be recognized! let\'s see...') == \
+        'almost nothing should be recognized <unknown/> let<unknown/>s see ...'
 
 
 @given(st.lists(st.text()))
