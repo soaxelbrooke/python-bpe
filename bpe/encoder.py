@@ -1,7 +1,11 @@
 # coding=utf-8
 """ An encoder which learns byte pair encodings for white-space separated text.  Can tokenize, encode, and decode. """
 from collections import Counter
-from typing import Dict, Iterable, Callable, List, Any, Iterator
+
+try:
+    from typing import Dict, Iterable, Callable, List, Any, Iterator
+except ImportError:
+    pass
 
 from nltk.tokenize import wordpunct_tokenize
 from tqdm import tqdm
