@@ -6,10 +6,10 @@ python:
   - pypy
   - pypy3
 install:
-  - python setup.py install
-  - python3 -m pip install --user mypy
+  - python3 setup.py install
+  - python2 setup.py install
 script:
   - python3 -m mypy bpe --ignore-missing-imports
   - python3 -m mypy bpe --py2 --ignore-missing-imports
-  - python setup.py test
+  - python3 setup.py test
   - python2 setup.py test

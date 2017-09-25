@@ -3,3 +3,4 @@ tqdm
 pytest
 hypothesis
 toolz
+mypy
