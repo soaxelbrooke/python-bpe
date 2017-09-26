@@ -189,12 +189,12 @@ class Encoder:
             current_word = ''
             for idx in row:
                 if self.inverse_bpe_vocab.get(idx) == self.SOW:
-                    if rebuilding_word:
+                    if rebuilding_word and self.strict:
                         raise ValueError('Encountered second SOW token before EOW.')
                     rebuilding_word = True
 
                 elif self.inverse_bpe_vocab.get(idx) == self.EOW:
-                    if not rebuilding_word:
+                    if not rebuilding_word and self.strict:
                         raise ValueError('Encountered EOW without matching SOW.')
                     rebuilding_word = False
                     words.append(current_word)
