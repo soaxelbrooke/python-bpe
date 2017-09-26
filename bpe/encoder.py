@@ -50,7 +50,7 @@ class Encoder:
     def byte_pair_counts(self, words):
         # type: (Encoder, Iterable[str]) -> Iterable[Counter]
         """ Counts space separated token character pairs:
-            [('T h i s </w>', 4}] -> {'Th': 4, 'hi': 4, 'is': 4, 's</w>': 4}
+            [('T h i s </w>', 4}] -> {'Th': 4, 'hi': 4, 'is': 4}
         """
         for token, count in self._progress_bar(self.count_tokens(words).items()):
             bp_counts = Counter()  # type: Counter
@@ -62,15 +62,13 @@ class Encoder:
                 for ngram in ngrams:
                     bp_counts[''.join(ngram)] += count
 
-            if self.EOW in bp_counts:
-                del bp_counts[self.EOW]
             yield bp_counts
 
     def count_tokens(self, words):
         # type: (Encoder, Iterable[str]) -> Dict[str, int]
         """ Count tokens into a BPE vocab """
         token_counts = Counter(self._progress_bar(words))
-        return {' '.join(token) + ' ' + self.EOW: count for token, count in token_counts.items()}
+        return {' '.join(token): count for token, count in token_counts.items()}
 
     def learn_word_vocab(self, sentences):
         # type: (Encoder, Iterable[str]) -> Dict[str, int]

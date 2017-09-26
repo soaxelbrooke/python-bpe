@@ -162,3 +162,10 @@ def test_unknown_char_handling():
     result = list(encoder.inverse_transform(encoder.transform([';'])))[0]
     assert encoder.UNK in result
     assert ';' not in result
+
+
+def test_mixed_encoder():
+    encoder = Encoder(silent=True, vocab_size=1000, pct_bpe=0.98)
+    encoder.fit(test_corpus)
+    assert encoder.tokenize('import this yield toolz') == ['import', SOW, 'th', 'is', EOW, SOW,
+                                                           'yiel', 'd', EOW, SOW, 'tool', 'z', EOW]
