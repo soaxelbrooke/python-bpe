@@ -183,7 +183,7 @@ class Encoder:
             if fixed_length is not None:
                 encoded = encoded[:fixed_length]
                 while len(encoded) < fixed_length:
-                    encoded.append(self.word_vocab[self.PAD])
+                    encoded.append(self.bpe_vocab[self.PAD])
 
             yield encoded[::direction]
 
