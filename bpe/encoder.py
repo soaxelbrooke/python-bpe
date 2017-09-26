@@ -48,6 +48,14 @@ class Encoder:
         self.PAD = PAD
         self.strict = strict
 
+    def mute(self):
+        """ Turn on silent mode """
+        self._progress_bar = iter
+
+    def unmute(self):
+        """ Turn off silent mode """
+        self._progress_bar = tqdm
+
     def byte_pair_counts(self, words):
         # type: (Encoder, Iterable[str]) -> Iterable[Counter]
         """ Counts space separated token character pairs:
