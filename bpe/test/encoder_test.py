@@ -119,7 +119,6 @@ def test_basic_transform():
     assert len(list(encoder.transform(['this']))[0]) == 4
 
 
-
 def test_inverse_transform():
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)

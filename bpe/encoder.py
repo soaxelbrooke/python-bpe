@@ -159,7 +159,7 @@ class Encoder:
         return tokens
 
     def transform(self, sentences, reverse=False, fixed_length=None):
-        # type: (Encoder, Iterable[str], bool, int, str) -> Iterable[List[int]]
+        # type: (Encoder, Iterable[str], bool, int) -> Iterable[List[int]]
         """ Turns space separated tokens into vocab idxs """
         direction = -1 if reverse else 1
         for sentence in sentences:
@@ -229,6 +229,7 @@ class Encoder:
     @classmethod
     def from_dict(cls, vocabs):
         # type: (Any, Dict[str, Dict[str, int]]) -> Encoder
+        """ Load encoder from dict produced with vocabs_to_dict """
         encoder = Encoder()
         encoder.word_vocab = vocabs['words']
         encoder.bpe_vocab = vocabs['byte_pairs']
@@ -241,6 +242,7 @@ class Encoder:
     @classmethod
     def load(cls, in_path):
         # type: (Any, str) -> Encoder
+        """ Loads an encoder from path saved with save """
         with open(in_path) as infile:
             obj = json.load(infile)
         return cls.from_dict(obj)
