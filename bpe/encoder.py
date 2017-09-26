@@ -24,7 +24,7 @@ class Encoder:
 
     def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=wordpunct_tokenize, 
                  silent=False, ngram_min=2, ngram_max=4, batch_size=1000000, required_tokens=None,
-                 EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
+                 strict=False, EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
@@ -46,6 +46,7 @@ class Encoder:
         self.sow_len = len(SOW)
         self.UNK = UNK
         self.PAD = PAD
+        self.strict = strict
 
     def byte_pair_counts(self, words):
         # type: (Encoder, Iterable[str]) -> Iterable[Counter]
@@ -205,8 +206,14 @@ class Encoder:
                 elif idx in self.inverse_word_vocab:
                     words.append(self.inverse_word_vocab[idx])
 
+                elif idx in self.inverse_bpe_vocab:
+                    if self.strict:
+                        raise ValueError("Found BPE index {} when not rebuilding word!".format(idx))
+                    else:
+                        words.append(self.inverse_bpe_vocab[idx])
+
                 else:
-                    raise RuntimeError("Unable to unpack token IDX {}!".format(idx))
+                    raise ValueError("Got index {} that was not in word or BPE vocabs!".format(idx))
 
             yield ' '.join(words)
 

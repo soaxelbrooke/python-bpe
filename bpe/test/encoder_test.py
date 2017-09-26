@@ -169,3 +169,25 @@ def test_mixed_encoder():
     encoder.fit(test_corpus)
     assert encoder.tokenize('import this yield toolz') == ['import', SOW, 'th', 'is', EOW, SOW,
                                                            'yiel', 'd', EOW, SOW, 'tool', 'z', EOW]
+
+
+def test_strict_mode():
+    strict_encoder = Encoder(silent=True, pct_bpe=1, strict=True)
+    strict_encoder.fit(test_corpus)
+    failed = False
+    idxs = [[9]]
+    try:
+        list(strict_encoder.inverse_transform(idxs))
+    except ValueError:
+        failed = True
+    assert failed, 'Should have failed to inverse transform word due to strict mode'
+
+    non_strict_encoder = Encoder(silent=True, pct_bpe=1, strict=False)
+    non_strict_encoder.fit(test_corpus)
+    failed = False
+    idxs = [[9]]
+    try:
+        list(non_strict_encoder.inverse_transform(idxs))
+    except ValueError:
+        failed = True
+    assert not failed, 'Should not have failed to inverse transform word due to non-strict mode'
