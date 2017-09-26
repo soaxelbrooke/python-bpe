@@ -162,7 +162,7 @@ class Encoder:
         # type: (Encoder, Iterable[str], bool, int) -> Iterable[List[int]]
         """ Turns space separated tokens into vocab idxs """
         direction = -1 if reverse else 1
-        for sentence in sentences:
+        for sentence in self._progress_bar(sentences):
             encoded = []
             tokens = list(self.tokenize(sentence.lower().strip()))
             for token in tokens:
