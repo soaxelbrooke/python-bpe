@@ -3,7 +3,7 @@
 from hypothesis import given
 import hypothesis.strategies as st
 
-from bpe.encoder import Encoder
+from bpe.encoder import Encoder, DEFAULT_EOW, DEFAULT_SOW, DEFAULT_UNK, DEFAULT_PAD
 
 # Generated with http://pythonpsum.com
 test_corpus = '''Object raspberrypi functools dict kwargs. Gevent raspberrypi functools. Dunder raspberrypi decorator dict lambda zip import pyramid.
@@ -17,6 +17,11 @@ Method raspberrypi beautiful unit method cython implicit zip. Dunder integration
 Gevent integration decorator test python object guido. Reduce integration beautiful goat.
 Method raspberrypi diversity pypi return tuple list. Django integration functools. Method integration beautiful self return future kwargs. Gevent raspberrypi functools unit lambda zip python science functools. Future raspberrypi community pypy return six cython.
 '''.split('\n')
+
+EOW = DEFAULT_EOW
+SOW = DEFAULT_SOW
+UNK = DEFAULT_UNK
+PAD = DEFAULT_PAD
 
 
 @given(st.integers(min_value=1))
@@ -41,20 +46,18 @@ def test_encoder_creation_graceful_failure(vocab_size):
 def test_bpe_encoder_fit():
     """ Encoer should be able to fit to provided text data. """
     encoder = Encoder(silent=True, pct_bpe=1)
-    EOW = encoder.EOW
     encoder.fit(test_corpus)
-    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
-                                                            'tool', 'z', EOW,
-                                                            'impo', 'rt' + EOW,
-                                                            'redu', 'ce' + EOW]
+    assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
+                                                            SOW, 'tool', 'z', EOW,
+                                                            SOW, 'impo', 'rt', EOW,
+                                                            SOW, 'redu', 'ce', EOW]
 
 
 def test_single_letter_tokenizing():
     """ Should yield single letters when untrained """
     encoder = Encoder()
-    EOW = encoder.EOW
     assert encoder.tokenize('single letters') == \
-        list('single') + [EOW] + list('letters') + [EOW]
+        [SOW] + [UNK] * len('single') + [EOW, SOW] + [UNK] * len('letters') + [EOW]
 
 
 def test_unseen_word_ending():
@@ -63,34 +66,33 @@ def test_unseen_word_ending():
     """
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
-    EOW = encoder.EOW
-    assert encoder.tokenize('import toolz') == ['impo', 'rt' + EOW, 'tool', 'z', EOW]
+    assert encoder.tokenize('import toolz') == [SOW, 'impo', 'rt', EOW, SOW, 'tool', 'z', EOW]
 
 
 def test_dump_and_load():
     """ Should be able to dump encoder to dict, then load it again. """
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
-    EOW = encoder.EOW
-    assert encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
-                                                            'tool', 'z', EOW,
-                                                            'impo', 'rt' + EOW,
-                                                            'redu', 'ce' + EOW]
+    assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
+                                                            SOW, 'tool', 'z', EOW,
+                                                            SOW, 'impo', 'rt', EOW,
+                                                            SOW, 'redu', 'ce', EOW]
 
     encoder_d = encoder.vocabs_to_dict()
     new_encoder = Encoder.from_dict(encoder_d)
 
-    assert new_encoder.tokenize('from toolz import reduce') == ['f', 'ro', 'm', EOW,
-                                                                'tool', 'z', EOW,
-                                                                'impo', 'rt' + EOW,
-                                                                'redu', 'ce' + EOW]
+    assert new_encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
+                                                                SOW, 'tool', 'z', EOW,
+                                                                SOW, 'impo', 'rt', EOW,
+                                                                SOW, 'redu', 'ce', EOW]
+
 
 def test_required_tokens():
     """ Should be able to require tokens to be present in encoder """
     encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['cats', 'dogs'])
     encoder.fit(test_corpus)
-    assert 'cats' + encoder.EOW in encoder.word_vocab
-    assert 'dogs' + encoder.EOW in encoder.word_vocab
+    assert 'cats' in encoder.word_vocab
+    assert 'dogs' in encoder.word_vocab
 
 
 def test_eow_accessible_on_encoders():
@@ -101,7 +103,21 @@ def test_eow_accessible_on_encoders():
 def test_subword_tokenize():
     encoder = Encoder(silent=True, pct_bpe=1)
     encoder.fit(test_corpus)
-    assert list(encoder.subword_tokenize('this')) == ['th', 'is', encoder.EOW]
+    assert list(encoder.subword_tokenize('this')) == [SOW, 'th', 'is', EOW]
+
+
+def test_tokenize():
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+    assert list(encoder.tokenize('this is how')) == [SOW, 'th', 'is', EOW, SOW, 'is', EOW, SOW,
+                                                     'ho', 'w', EOW]
+
+
+def test_basic_transform():
+    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder.fit(test_corpus)
+    assert len(list(encoder.transform(['this']))[0]) == 4
+
 
 
 def test_inverse_transform():
@@ -113,10 +129,10 @@ def test_inverse_transform():
     assert transform('this is how we do it') == 'this is how we do it'
 
     assert transform('looking at the promotional stuff, it looks good.') == \
-        'looking at the promotional stuff <unknown/> it looks good .'
+        'looking at the promotional stuff {} it looks good .'.format(UNK)
 
     assert transform('almost nothing should be recognized! let\'s see...') == \
-        'almost nothing should be recognized <unknown/> let <unknown/> s see ...'
+        'almost nothing should be recognized {unk} let {unk} s see ...'.format(unk=UNK)
 
 
 @given(st.lists(st.text()))
@@ -127,14 +143,14 @@ def test_encoder_learning_from_random_sentences(sentences):
 
 
 def test_fixed_length_encoding():
-    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['<PAD>'])
+    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=[PAD])
     encoder.fit(test_corpus)
 
-    result = list(encoder.transform([''], fixed_length=10, padding='<PAD>'))
+    result = list(encoder.transform([''], fixed_length=10))
     assert len(result) == 1
     assert len(result[0]) == 10
 
-    result = list(encoder.transform(['', 'import ' * 50], fixed_length=10, padding='<PAD>'))
+    result = list(encoder.transform(['', 'import ' * 50], fixed_length=10))
     assert len(result) == 2
     assert len(result[0]) == 10
     assert len(result[1]) == 10
