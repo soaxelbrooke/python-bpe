@@ -12,10 +12,6 @@ Reduce integration coroutine bdfl python. Cython integration beautiful list pyth
 Object raspberrypi diversity 2to3 dunder script. Python integration exception dict kwargs dunder pycon. Import raspberrypi beautiful test import six web. Future integration mercurial self script web. Return raspberrypi community test.
 Django raspberrypi mercurial unit import yield raspberrypi rocksdahouse. Dunder raspberrypi mercurial list reduce class test scipy.
 Object integration beautiful 2to3. Kwargs raspberrypi beautiful dict lambda class generator. Django integration coroutine dict import web map pyramid. Kwargs raspberrypi diversity dict future scipy raspberrypi rocksdahouse.
-Import raspberrypi exception list object. Object raspberrypi coroutine unit lambda sys django. Method raspberrypi generator test reduce future tuple. Kwargs raspberrypi decorator list cython def import twisted.
-Method raspberrypi beautiful unit method cython implicit zip. Dunder integration generator dict gevent def.
-Gevent integration decorator test python object guido. Reduce integration beautiful goat.
-Method raspberrypi diversity pypi return tuple list. Django integration functools. Method integration beautiful self return future kwargs. Gevent raspberrypi functools unit lambda zip python science functools. Future raspberrypi community pypy return six cython.
 '''.split('\n')
 
 EOW = DEFAULT_EOW
@@ -45,7 +41,7 @@ def test_encoder_creation_graceful_failure(vocab_size):
 
 def test_bpe_encoder_fit():
     """ Encoer should be able to fit to provided text data. """
-    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
+    encoder = Encoder(pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
                                                             SOW, 'tool', 'z', EOW,
@@ -64,14 +60,14 @@ def test_unseen_word_ending():
     """ The last character should come with a </w> even if it wasn't seen as the last letter of a 
         word in the training set.
     """
-    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
+    encoder = Encoder(pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('import toolz') == [SOW, 'impo', 'rt', EOW, SOW, 'tool', 'z', EOW]
 
 
 def test_dump_and_load():
     """ Should be able to dump encoder to dict, then load it again. """
-    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
+    encoder = Encoder(pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
                                                             SOW, 'tool', 'z', EOW,
@@ -89,7 +85,7 @@ def test_dump_and_load():
 
 def test_required_tokens():
     """ Should be able to require tokens to be present in encoder """
-    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=['cats', 'dogs'])
+    encoder = Encoder(pct_bpe=1, required_tokens=['cats', 'dogs'])
     encoder.fit(test_corpus)
     assert 'cats' in encoder.word_vocab
     assert 'dogs' in encoder.word_vocab
@@ -101,26 +97,26 @@ def test_eow_accessible_on_encoders():
 
 
 def test_subword_tokenize():
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(pct_bpe=1)
     encoder.fit(test_corpus)
     assert list(encoder.subword_tokenize('this')) == [SOW, 'th', 'is', EOW]
 
 
 def test_tokenize():
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(pct_bpe=1)
     encoder.fit(test_corpus)
     assert list(encoder.tokenize('this is how')) == [SOW, 'th', 'is', EOW, SOW, 'is', EOW, SOW,
                                                      'ho', 'w', EOW]
 
 
 def test_basic_transform():
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(pct_bpe=1)
     encoder.fit(test_corpus)
     assert len(list(encoder.transform(['this']))[0]) == 4
 
 
 def test_inverse_transform():
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(pct_bpe=1)
     encoder.fit(test_corpus)
 
     transform = lambda text: list(encoder.inverse_transform(encoder.transform([text])))[0]
@@ -139,13 +135,13 @@ def test_inverse_transform():
 
 @given(st.lists(st.text()))
 def test_encoder_learning_from_random_sentences(sentences):
-    encoder = Encoder(silent=True)
+    encoder = Encoder()
     encoder.fit(test_corpus)
     encoded = encoder.transform(sentences)
 
 
 def test_fixed_length_encoding():
-    encoder = Encoder(silent=True, pct_bpe=1, required_tokens=[PAD])
+    encoder = Encoder(pct_bpe=1, required_tokens=[PAD])
     encoder.fit(test_corpus)
 
     result = list(encoder.transform([''], fixed_length=10))
@@ -159,7 +155,7 @@ def test_fixed_length_encoding():
 
 
 def test_unknown_char_handling():
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(pct_bpe=1)
     encoder.fit(test_corpus)
 
     result = list(encoder.inverse_transform(encoder.transform([';'])))[0]
@@ -168,14 +164,14 @@ def test_unknown_char_handling():
 
 
 def test_mixed_encoder():
-    encoder = Encoder(silent=True, vocab_size=1000, pct_bpe=0.98, ngram_max=4)
+    encoder = Encoder(vocab_size=1000, pct_bpe=0.98, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('import this yield toolz') == ['import', SOW, 'th', 'is', EOW, SOW,
                                                            'yiel', 'd', EOW, SOW, 'tool', 'z', EOW]
 
 
 def test_strict_mode():
-    strict_encoder = Encoder(silent=True, pct_bpe=1, strict=True)
+    strict_encoder = Encoder(pct_bpe=1, strict=True)
     strict_encoder.fit(test_corpus)
     failed = False
     idxs = [[9]]
@@ -185,7 +181,7 @@ def test_strict_mode():
         failed = True
     assert failed, 'Should have failed to inverse transform word due to strict mode'
 
-    non_strict_encoder = Encoder(silent=True, pct_bpe=1, strict=False)
+    non_strict_encoder = Encoder(pct_bpe=1, strict=False)
     non_strict_encoder.fit(test_corpus)
     failed = False
     idxs = [[9]]
