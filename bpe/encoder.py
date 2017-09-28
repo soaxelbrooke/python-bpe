@@ -22,9 +22,9 @@ class Encoder:
     """ Encodes white-space separated text using byte-pair encoding.  See https://arxiv.org/abs/1508.07909 for details.
     """
 
-    def __init__(self, vocab_size=8192, pct_bpe=0.5, word_tokenizer=wordpunct_tokenize, 
-                 silent=False, ngram_min=2, ngram_max=4, batch_size=1000000, required_tokens=None,
-                 strict=False, EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
+    def __init__(self, vocab_size=8192, pct_bpe=0.2, word_tokenizer=wordpunct_tokenize, 
+                 silent=True, ngram_min=2, ngram_max=2, required_tokens=None, strict=False, 
+                 EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
@@ -38,7 +38,6 @@ class Encoder:
         self._progress_bar = iter if silent else tqdm
         self.ngram_min = ngram_min
         self.ngram_max = ngram_max
-        self.batch_size = batch_size
         self.required_tokens = required_tokens
         self.EOW = EOW
         self.SOW = SOW
