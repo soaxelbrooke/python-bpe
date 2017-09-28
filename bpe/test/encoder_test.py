@@ -133,6 +133,9 @@ def test_inverse_transform():
     assert transform('almost nothing should be recognized! let\'s see...') == \
         'almost nothing should be recognized {unk} let {unk} s see ...'.format(unk=UNK)
 
+    assert transform("Vizzini: He didn't fall? INCONCEIVABLE!") == \
+        "vizzini {unk} he didn {unk} t fall {unk} inconceivable {unk}".format(unk=UNK)
+
 
 @given(st.lists(st.text()))
 def test_encoder_learning_from_random_sentences(sentences):
