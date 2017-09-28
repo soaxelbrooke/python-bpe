@@ -228,7 +228,7 @@ class Encoder:
             yield ' '.join(words)
 
     def vocabs_to_dict(self, dont_warn=False):
-        # type: (Encoder) -> Dict[str, Dict[str, int]]
+        # type: (Encoder, bool) -> Dict[str, Dict[str, int]]
         """ Turns vocab into dict that is json-serializeable """
         if self.custom_tokenizer and not dont_warn:
             print("WARNING! You've specified a non-default tokenizer.  You'll need to reassign it when you load the "
@@ -252,7 +252,7 @@ class Encoder:
         }
 
     def save(self, outpath, dont_warn=False):
-        # type: (Encoder, str) -> None
+        # type: (Encoder, str, bool) -> None
         """ Serializes and saves encoder to provided path """
         with open(outpath, 'w') as outfile:
             json.dump(self.vocabs_to_dict(dont_warn), outfile)

@@ -7,5 +7,4 @@ install:
   - python setup.py install
 script:
   - python -m mypy bpe --ignore-missing-imports
-  - python -m mypy bpe --py2 --ignore-missing-imports
   - python setup.py test
