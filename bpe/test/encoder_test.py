@@ -45,7 +45,7 @@ def test_encoder_creation_graceful_failure(vocab_size):
 
 def test_bpe_encoder_fit():
     """ Encoer should be able to fit to provided text data. """
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
                                                             SOW, 'tool', 'z', EOW,
@@ -64,14 +64,14 @@ def test_unseen_word_ending():
     """ The last character should come with a </w> even if it wasn't seen as the last letter of a 
         word in the training set.
     """
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('import toolz') == [SOW, 'impo', 'rt', EOW, SOW, 'tool', 'z', EOW]
 
 
 def test_dump_and_load():
     """ Should be able to dump encoder to dict, then load it again. """
-    encoder = Encoder(silent=True, pct_bpe=1)
+    encoder = Encoder(silent=True, pct_bpe=1, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('from toolz import reduce') == [SOW, 'f', 'ro', 'm', EOW,
                                                             SOW, 'tool', 'z', EOW,
@@ -165,7 +165,7 @@ def test_unknown_char_handling():
 
 
 def test_mixed_encoder():
-    encoder = Encoder(silent=True, vocab_size=1000, pct_bpe=0.98)
+    encoder = Encoder(silent=True, vocab_size=1000, pct_bpe=0.98, ngram_max=4)
     encoder.fit(test_corpus)
     assert encoder.tokenize('import this yield toolz') == ['import', SOW, 'th', 'is', EOW, SOW,
                                                            'yiel', 'd', EOW, SOW, 'tool', 'z', EOW]

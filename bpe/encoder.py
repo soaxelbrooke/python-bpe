@@ -22,15 +22,18 @@ class Encoder:
     """ Encodes white-space separated text using byte-pair encoding.  See https://arxiv.org/abs/1508.07909 for details.
     """
 
-    def __init__(self, vocab_size=8192, pct_bpe=0.2, word_tokenizer=wordpunct_tokenize, 
+    def __init__(self, vocab_size=8192, pct_bpe=0.2, word_tokenizer=None,
                  silent=True, ngram_min=2, ngram_max=2, required_tokens=None, strict=False, 
                  EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
+        self.vocab_size = vocab_size
+        self.pct_bpe = pct_bpe
         self.word_vocab_size = max([int(vocab_size * (1 - pct_bpe)), len(required_tokens or [])])
         self.bpe_vocab_size = vocab_size - self.word_vocab_size
-        self.word_tokenizer = word_tokenizer
+        self.word_tokenizer = word_tokenizer if word_tokenizer is not None else wordpunct_tokenize
+        self.custom_tokenizer = word_tokenizer is not None
         self.word_vocab = {}  # type: Dict[str, int]
         self.bpe_vocab = {}  # type: Dict[str, int]
         self.inverse_word_vocab = {}  # type: Dict[int, str]
@@ -224,25 +227,41 @@ class Encoder:
 
             yield ' '.join(words)
 
-    def vocabs_to_dict(self):
+    def vocabs_to_dict(self, dont_warn=False):
         # type: (Encoder) -> Dict[str, Dict[str, int]]
         """ Turns vocab into dict that is json-serializeable """
+        if self.custom_tokenizer and not dont_warn:
+            print("WARNING! You've specified a non-default tokenizer.  You'll need to reassign it when you load the "
+                  "model!")
         return {
             'byte_pairs': self.bpe_vocab,
             'words': self.word_vocab,
+            'kwargs': {
+                'vocab_size': self.vocab_size,
+                'pct_bpe': self.pct_bpe,
+                'silent': self._progress_bar is iter,
+                'ngram_min': self.ngram_min,
+                'ngram_max': self.ngram_max,
+                'required_tokens': self.required_tokens,
+                'strict': self.strict,
+                'EOW': self.EOW,
+                'SOW': self.SOW,
+                'UNK': self.UNK,
+                'PAD': self.PAD,
+            }
         }
 
-    def save(self, outpath):
+    def save(self, outpath, dont_warn=False):
         # type: (Encoder, str) -> None
         """ Serializes and saves encoder to provided path """
         with open(outpath, 'w') as outfile:
-            json.dump(self.vocabs_to_dict(), outfile)
+            json.dump(self.vocabs_to_dict(dont_warn), outfile)
 
     @classmethod
     def from_dict(cls, vocabs):
         # type: (Any, Dict[str, Dict[str, int]]) -> Encoder
         """ Load encoder from dict produced with vocabs_to_dict """
-        encoder = Encoder()
+        encoder = Encoder(**vocabs['kwargs'])
         encoder.word_vocab = vocabs['words']
         encoder.bpe_vocab = vocabs['byte_pairs']
 
