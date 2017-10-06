@@ -12,10 +12,10 @@ from tqdm import tqdm
 import toolz
 import json
 
-DEFAULT_EOW = '</w>'
-DEFAULT_SOW = '<w>'
-DEFAULT_UNK = '<unk/>'
-DEFAULT_PAD = '<pad/>'
+DEFAULT_EOW = '__eow'
+DEFAULT_SOW = '__sow'
+DEFAULT_UNK = '__unk'
+DEFAULT_PAD = '__pad'
 
 
 class Encoder:
@@ -28,9 +28,16 @@ class Encoder:
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
 
+        self.EOW = EOW
+        self.SOW = SOW
+        self.eow_len = len(EOW)
+        self.sow_len = len(SOW)
+        self.UNK = UNK
+        self.PAD = PAD
+        self.required_tokens = set(required_tokens or []).union({self.UNK, self.PAD})
         self.vocab_size = vocab_size
         self.pct_bpe = pct_bpe
-        self.word_vocab_size = max([int(vocab_size * (1 - pct_bpe)), len(required_tokens or [])])
+        self.word_vocab_size = max([int(vocab_size * (1 - pct_bpe)), len(self.required_tokens or [])])
         self.bpe_vocab_size = vocab_size - self.word_vocab_size
         self.word_tokenizer = word_tokenizer if word_tokenizer is not None else wordpunct_tokenize
         self.custom_tokenizer = word_tokenizer is not None
@@ -41,13 +48,6 @@ class Encoder:
         self._progress_bar = iter if silent else tqdm
         self.ngram_min = ngram_min
         self.ngram_max = ngram_max
-        self.required_tokens = required_tokens
-        self.EOW = EOW
-        self.SOW = SOW
-        self.eow_len = len(EOW)
-        self.sow_len = len(SOW)
-        self.UNK = UNK
-        self.PAD = PAD
         self.strict = strict
 
     def mute(self):
@@ -94,7 +94,7 @@ class Encoder:
         # type: (Encoder, Iterable[str]) -> Dict[str, int]
         """ Learns a vocab of byte pair encodings """
         vocab = Counter()  # type: Counter
-        for token in [self.UNK, self.SOW, self.EOW, self.PAD]:
+        for token in {self.SOW, self.EOW}:
             vocab[token] = int(2**63)
         for idx, byte_pair_count in enumerate(self.byte_pair_counts(words)):
             for byte_pair, count in byte_pair_count.items():
@@ -180,12 +180,12 @@ class Encoder:
                 elif token in self.bpe_vocab:
                     encoded.append(self.bpe_vocab[token])
                 else:
-                    encoded.append(self.bpe_vocab[self.UNK])
+                    encoded.append(self.word_vocab[self.UNK])
 
             if fixed_length is not None:
                 encoded = encoded[:fixed_length]
                 while len(encoded) < fixed_length:
-                    encoded.append(self.bpe_vocab[self.PAD])
+                    encoded.append(self.word_vocab[self.PAD])
 
             yield encoded[::direction]
 
@@ -225,7 +225,7 @@ class Encoder:
                 else:
                     raise ValueError("Got index {} that was not in word or BPE vocabs!".format(idx))
 
-            yield ' '.join(words)
+            yield ' '.join(w for w in words if w != '')
 
     def vocabs_to_dict(self, dont_warn=False):
         # type: (Encoder, bool) -> Dict[str, Dict[str, int]]
