@@ -34,7 +34,7 @@ class Encoder:
         self.sow_len = len(SOW)
         self.UNK = UNK
         self.PAD = PAD
-        self.required_tokens = set(required_tokens or []).union({self.UNK, self.PAD})
+        self.required_tokens = list(set(required_tokens or []).union({self.UNK, self.PAD}))
         self.vocab_size = vocab_size
         self.pct_bpe = pct_bpe
         self.word_vocab_size = max([int(vocab_size * (1 - pct_bpe)), len(self.required_tokens or [])])
