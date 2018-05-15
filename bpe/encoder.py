@@ -213,6 +213,9 @@ class Encoder:
                 elif rebuilding_word and (idx in self.inverse_bpe_vocab):
                     current_word += self.inverse_bpe_vocab[idx]
 
+                elif rebuilding_word and (idx in self.inverse_word_vocab):
+                    current_word += self.inverse_word_vocab[idx]
+
                 elif idx in self.inverse_word_vocab:
                     words.append(self.inverse_word_vocab[idx])
 

@@ -165,6 +165,17 @@ def test_mixed_encoder():
                                                            'yiel', 'd', EOW, SOW, 'tool', 'z', EOW]
 
 
+def test_mixed_encoder_word_in_other_word():
+    """ Ensure that a word is correctly decoded when it contains another word """
+    encoder = Encoder(vocab_size=1000, pct_bpe=0.98, ngram_max=4)
+    encoder.fit(test_corpus)
+    text = 'imimportport this yield toolz'
+    idxs = list(encoder.transform([text]))
+    idxs[0][1] = encoder.word_vocab['import']
+    rebuilt = next(encoder.inverse_transform(idxs))
+    assert rebuilt == 'import' + text[1:]
+
+
 def test_strict_mode():
     strict_encoder = Encoder(pct_bpe=1, strict=True)
     strict_encoder.fit(test_corpus)
