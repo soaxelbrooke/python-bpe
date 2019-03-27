@@ -6,9 +6,7 @@ AKA Byte Pair Encoding.  Learns a vocab and byte pair encoding for provided whit
 ## Usage
 
 ```bash
-$ pip install git+https://github.com/soaxelbrooke/python-bpe.git@master
-# Or install with pipenv...
-$ pipenv install git+https://github.com/soaxelbrooke/python-bpe.git@master#egg=bpe
+$ pip3 instal bpe
 ```
 
 ```python
