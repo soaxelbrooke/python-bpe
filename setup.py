@@ -10,7 +10,7 @@ with open("requirements.txt") as infile:
 
 setup(
     name="bpe",
-    version="0.2.2",
+    version="1.0",
     description="Byte pair encoding for graceful handling of rare words in NLP",
     url="https://github.com/soaxelbrooke/python-bpe",
     author="Stuart Axelbrooke",
