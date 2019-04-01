@@ -6,7 +6,7 @@ AKA Byte Pair Encoding.  Learns a vocab and byte pair encoding for provided whit
 ## Usage
 
 ```bash
-$ pip3 install bpe
+$ pip3 install --user bpe
 ```
 
 ```python
