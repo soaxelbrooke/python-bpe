@@ -23,7 +23,8 @@ class Encoder:
     """
 
     def __init__(self, vocab_size=8192, pct_bpe=0.2, word_tokenizer=None,
-                 silent=True, ngram_min=2, ngram_max=2, required_tokens=None, strict=False, 
+                 silent=True, ngram_min=2, ngram_max=2, required_tokens=None,
+                 strict=False, lowercase=False,
                  EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
@@ -49,6 +50,7 @@ class Encoder:
         self.ngram_min = ngram_min
         self.ngram_max = ngram_max
         self.strict = strict
+        self.lowercase = lowercase
 
     def mute(self):
         """ Turn on silent mode """
@@ -109,8 +111,10 @@ class Encoder:
     def fit(self, text):
         # type: (Encoder, Iterable[str]) -> None
         """ Learn vocab from text. """
-        _text = [l.lower().strip() for l in text]
-
+        if self.lowercase:
+            _text = [l.lower().strip() for l in text]
+        else:
+            _text = [l.strip() for l in text]
         # First, learn word vocab
         self.word_vocab = self.learn_word_vocab(_text)
 
@@ -156,8 +160,10 @@ class Encoder:
     def tokenize(self, sentence):
         # type: (Encoder, str) -> List[str]
         """ Split a sentence into word and subword tokens """
-        word_tokens = self.word_tokenizer(sentence.lower().strip())
-
+        if self.lowercase:
+            word_tokens = self.word_tokenizer(sentence.lower().strip())
+        else:
+            word_tokens = self.word_tokenizer(sentence.strip())
         tokens = []
         for word_token in word_tokens:
             if word_token in self.word_vocab:
@@ -173,7 +179,10 @@ class Encoder:
         direction = -1 if reverse else 1
         for sentence in self._progress_bar(sentences):
             encoded = []
-            tokens = list(self.tokenize(sentence.lower().strip()))
+            if self.lowercase:
+                tokens = list(self.tokenize(sentence.lower().strip()))
+            else:
+                tokens = list(self.tokenize(sentence.strip()))
             for token in tokens:
                 if token in self.word_vocab:
                     encoded.append(self.word_vocab[token])
