@@ -125,7 +125,8 @@ def test_inverse_transform():
         'almost nothing should be recognized {unk} let {unk} s see ...'.format(unk=UNK)
 
     assert transform("Vizzini: He didn't fall? INCONCEIVABLE!") == \
-        "vizzini {unk} he didn {unk} t fall {unk} inconceivable {unk}".format(unk=UNK)
+        "{unk}izzini {unk} {unk}e didn {unk} t fall {unk} " \
+        "I{unk}CO{unk}C{unk}I{unk}{unk}{unk}{unk}{unk} {unk}".format(unk=UNK)
 
 
 @given(st.lists(st.text()))
