@@ -21,14 +21,14 @@ test_corpus = '''
     Django raspberrypi mercurial unit import yield raspberrypi visual rocksdahouse. Dunder raspberrypi mercurial list reduce class test scipy helmet zip?
 '''
 
-encoder = Encoder(200, pct_bpe=0.88)  # params chosen for demonstration purposes
+encoder = Encoder(200, pct_bpe=0.88, lowercase=True)  # params chosen for demonstration purposes
 encoder.fit(test_corpus.split('\n'))
 
 example = "Vizzini: He didn't fall? INCONCEIVABLE!"
 print(encoder.tokenize(example))
 # ['__sow', 'vi', 'z', 'zi', 'ni', '__eow', '__sow', ':', '__eow', 'he', 'didn', "'", 't', 'fall', '__sow', '?', '__eow', '__sow', 'in', 'co', 'n', 'ce', 'iv', 'ab', 'le', '__eow', '__sow', '!', '__eow']
 print(next(encoder.transform([example])))
-# [26, 108, 79, 104, 72, 24, 26, 117, 24, 9, 11, 8, 12, 10, 26, 90, 24, 26, 154, 56, 37, 149, 80, 169, 84, 24, 26, 156, 24]
+# [25, 108, 82, 83, 71, 24, 25, 154, 24, 14, 10, 11, 12, 13, 25, 85, 24, 25, 140, 59, 39, 157, 87, 165, 114, 24, 25, 148, 24]
 print(next(encoder.inverse_transform(encoder.transform([example]))))
 # vizzini : he didn ' t fall ? inconceivable !
 ```
