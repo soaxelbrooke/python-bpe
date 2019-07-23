@@ -104,6 +104,10 @@ class Encoder:
                 self.trim_vocab(10 * self.bpe_vocab_size, vocab)
 
         sorted_bpe_counts = sorted(vocab.items(), key=lambda p: -p[1])[:self.bpe_vocab_size]
+        
+         # here we need to remove bp based on whether they're in word_vocab already
+        sorted_bpe_counts = [x for x in sorted_bpe_counts if x[0] not in self.word_vocab]
+       
         return {bp: idx + self.word_vocab_size for idx, (bp, count) in enumerate(sorted_bpe_counts)}
 
     def fit(self, text):
