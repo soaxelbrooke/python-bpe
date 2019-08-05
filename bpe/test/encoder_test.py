@@ -196,3 +196,14 @@ def test_strict_mode():
     except ValueError:
         failed = True
     assert not failed, 'Should not have failed to inverse transform word due to non-strict mode'
+
+def test_common_byte_pair_collisions():
+    """ Ensure common byte pairs like "as" don't pull from word vocab when they are subword """
+    encoder = Encoder(vocab_size=200, pct_bpe=0.9, ngram_max=2)
+    encoder.fit(test_corpus + ["as"] * 10)
+    word = next(encoder.transform(["8 miles as the crow flies."]))
+    assert encoder.bpe_vocab["as"] not in word
+    assert encoder.word_vocab["as"] in word
+    subword = next(encoder.transform(["Basted turkey legs."]))
+    assert encoder.word_vocab["as"] not in subword
+    assert encoder.bpe_vocab["as"] in subword
