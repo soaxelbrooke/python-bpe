@@ -172,15 +172,26 @@ class Encoder:
         """ Turns space separated tokens into vocab idxs """
         direction = -1 if reverse else 1
         for sentence in self._progress_bar(sentences):
+            in_subword = False
             encoded = []
             tokens = list(self.tokenize(sentence.lower().strip()))
             for token in tokens:
-                if token in self.word_vocab:
-                    encoded.append(self.word_vocab[token])
-                elif token in self.bpe_vocab:
-                    encoded.append(self.bpe_vocab[token])
+                if in_subword:
+                    if token in self.bpe_vocab:
+                        if token == self.EOW:
+                            in_subword = False
+                        encoded.append(self.bpe_vocab[token])
+                    else:
+                        encoded.append(self.word_vocab[self.UNK])
                 else:
-                    encoded.append(self.word_vocab[self.UNK])
+                    if token == self.SOW:
+                        in_subword = True
+                        encoded.append(self.bpe_vocab[token])
+                    else:
+                        if token in self.word_vocab:
+                            encoded.append(self.word_vocab[token])
+                        else:
+                            encoded.append(self.word_vocab[self.UNK])
 
             if fixed_length is not None:
                 encoded = encoded[:fixed_length]
