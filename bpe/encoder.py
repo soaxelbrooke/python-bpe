@@ -24,7 +24,7 @@ class Encoder:
 
     def __init__(self, vocab_size=8192, pct_bpe=0.2, word_tokenizer=None,
                  silent=True, ngram_min=2, ngram_max=2, required_tokens=None,
-                 strict=False, lowercase=False,
+                 strict=False, lowercase=True,
                  EOW=DEFAULT_EOW, SOW=DEFAULT_SOW, UNK=DEFAULT_UNK, PAD=DEFAULT_PAD):
         if vocab_size < 1:
             raise ValueError('vocab size must be greater than 0.')
