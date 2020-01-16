@@ -1,12 +1,12 @@
 
 # BPE [![Build Status](https://travis-ci.org/soaxelbrooke/python-bpe.svg?branch=master)](https://travis-ci.org/soaxelbrooke/python-bpe)
 
-AKA Byte Pair Encoding.  Learns a vocab and byte pair encoding for provided white-space separated text.
+AKA Byte Pair Encoding.  Learns a vocab and byte pair encoding for provided white-space separated text. Recommend using [huggingface/tokenizers/](https://github.com/huggingface/tokenizers/) for production use-cases.
 
 ## Usage
 
 ```bash
-$ pip3 install --user bpe
+$ python3 -m pip install --user bpe
 ```
 
 ```python
