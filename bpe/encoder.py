@@ -248,7 +248,7 @@ class Encoder:
                 else:
                     raise ValueError("Got index {} that was not in word or BPE vocabs!".format(idx))
 
-            yield ' '.join(w for w in words if w != '')
+            yield ''.join(w for w in words)
 
     def vocabs_to_dict(self, dont_warn=False):
         # type: (Encoder, bool) -> Dict[str, Dict[str, int]]
