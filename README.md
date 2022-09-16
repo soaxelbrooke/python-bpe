@@ -12,7 +12,6 @@ $ python3 -m pip install --user bpe
 ```python
 from bpe import Encoder
 
-# Generated with http://pythonpsum.com
 test_corpus = '''
     Object raspberrypi functools dict kwargs. Gevent raspberrypi functools. Dunder raspberrypi decorator dict didn't lambda zip import pyramid, she lambda iterate?
     Kwargs raspberrypi diversity unit object gevent. Import fall integration decorator unit django yield functools twisted. Dunder integration decorator he she future. Python raspberrypi community pypy. Kwargs integration beautiful test reduce gil python closure. Gevent he integration generator fall test kwargs raise didn't visor he itertools...
