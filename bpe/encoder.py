@@ -274,11 +274,11 @@ class Encoder:
             }
         }
 
-    def save(self, outpath, dont_warn=False):
+    def save(self, outpath, dont_warn=False, encoding=None, ensure_ascii=True, indent=2):
         # type: (Encoder, str, bool) -> None
         """ Serializes and saves encoder to provided path """
-        with open(outpath, 'w') as outfile:
-            json.dump(self.vocabs_to_dict(dont_warn), outfile)
+        with open(outpath, 'w', encoding=encoding) as outfile:
+            json.dump(self.vocabs_to_dict(dont_warn), outfile, ensure_ascii=ensure_ascii, indent=indent)
 
     @classmethod
     def from_dict(cls, vocabs):
